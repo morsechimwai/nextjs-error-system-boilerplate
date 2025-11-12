@@ -959,53 +959,6 @@ describe("handleError", () => {
 })
 ```
 
-### ตัวอย่าง Integration Test
-
-```typescript
-// tests/integration/employee.test.ts
-import { createEmployeeAction, deleteEmployeeAction } from "@/actions/createEmployee"
-
-describe("Employee Actions Integration", () => {
-  it("should create employee successfully", async () => {
-    const employeeData = {
-      name: "Test Employee",
-      employeeId: "TEST001",
-      department: "IT"
-    }
-
-    const result = await createEmployeeAction(employeeData)
-
-    expect(result.ok).toBe(true)
-    if (result.ok) {
-      expect(result.data.name).toBe("Test Employee")
-      expect(result.data.employeeId).toBe("TEST001")
-    }
-  })
-
-  it("should return error for duplicate employee ID", async () => {
-    // สร้างพนักงานคนแรก
-    await createEmployeeAction({
-      name: "First Employee",
-      employeeId: "DUP001",
-      department: "IT"
-    })
-
-    // พยายามสร้างพนักงานที่มี ID ซ้ำ
-    const result = await createEmployeeAction({
-      name: "Second Employee",
-      employeeId: "DUP001", // ซ้ำ
-      department: "HR"
-    })
-
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.error.code).toBe("DUPLICATE_EMPLOYEE_ID")
-      expect(result.error.status).toBe(409)
-    }
-  })
-})
-```
-
 ## เทคโนโลยีและ Dependencies
 
 ### Core Technologies
@@ -1027,19 +980,6 @@ describe("Employee Actions Integration", () => {
 ระบบ Layered Error System ไม่ต้องพึ่งพา external libraries เพิ่มเติม ใช้เฉพาะ:
 - **TypeScript** - สำหรับ type definitions
 - **Next.js Server Actions** - สำหรับ API layer
-
-### Optional Testing Stack (สำหรับ production)
-```json
-{
-  "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "jest": "^29.5.0",
-    "jest-environment-jsdom": "^29.5.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/jest-dom": "^5.16.5"
-  }
-}
-```
 
 ## Best Practices และแนวทางการพัฒนา
 
