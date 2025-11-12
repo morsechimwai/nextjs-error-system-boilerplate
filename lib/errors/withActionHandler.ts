@@ -1,4 +1,4 @@
-// Error
+// HandleError
 import { handleError } from "./handleError"
 
 // Define the shape of the action response

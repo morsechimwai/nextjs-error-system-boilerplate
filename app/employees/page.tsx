@@ -44,7 +44,7 @@ export default function EmployeesPage() {
 
   // Handlers
   const handleDelete = withErrorHandling(async (employee: Employee) => {
-    const confirmed = window.confirm(`คุณแน่ใจหรือว่าต้องการลบ ${employee.name} พนักงานคนนี้?`)
+    const confirmed = window.confirm(`คุณแน่ใจหรือว่าต้องการลบ ${employee.name} ออกจากพนักงาน?`)
     if (!confirmed) return
 
     const response = await deleteEmployeeAction({ id: employee.id })
