@@ -43,18 +43,17 @@ Client/API Layer → withActionHandler() → AppError() → handleError() → wi
 
 ```typescript
 export class AppError extends Error {
-  code: string
-  status: number
-  meta?: any
+  readonly code: string
+  readonly status: number
+  readonly meta?: Record<string, unknown>
 
   constructor(
     code: string,
-    message: string,
-    status: number = 400,
-    meta?: any
+    message?: string,
+    status = 400,
+    meta?: Record<string, unknown>
   ) {
-    super(message)
-    this.name = 'AppError'
+    super(message ?? code)
     this.code = code
     this.status = status
     this.meta = meta
@@ -99,28 +98,12 @@ throw new AppError("VALIDATION_ERROR", "รูปแบบอีเมลไม�
 
 ```typescript
 export function handleError(error: unknown): AppError {
-  // ถ้าเป็น AppError อยู่แล้ว ส่งผ่านไปเลย
-  if (error instanceof AppError) {
-    return error
-  }
-
-  // ถ้าเป็น Error ปกติ
+  if (error instanceof AppError) return error
   if (error instanceof Error) {
-    console.error('Unhandled Error:', error)
-    return new AppError(
-      'INTERNAL_ERROR',
-      error.message || 'เกิดข้อผิดพลาดภายในระบบ',
-      500
-    )
+    console.error("[Unhandled Error]", error)
+    return new AppError("INTERNAL_ERROR", error.message, 500)
   }
-
-  // ถ้าเป็นอย่างอื่น (string, object, etc.)
-  console.error('Unknown Error:', error)
-  return new AppError(
-    'UNKNOWN_ERROR',
-    'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ',
-    500
-  )
+  return new AppError("UNKNOWN_ERROR", "Unexpected error", 500)
 }
 ```
 
@@ -152,14 +135,14 @@ try {
 Higher-Order Function ที่ห่อ service functions ให้จัดการ error อัตโนมัติ โดยจับทุก error และแปลงให้เป็น AppError
 
 ```typescript
-export function withErrorHandling<TArgs extends any[], TReturn>(
-  fn: (...args: TArgs) => Promise<TReturn>
+export function withErrorHandling<Args extends unknown[], ReturnType>(
+  fn: (...args: Args) => Promise<ReturnType>
 ) {
-  return async (...args: TArgs): Promise<TReturn> => {
+  return async (...args: Args): Promise<ReturnType> => {
     try {
       return await fn(...args)
-    } catch (error) {
-      throw handleError(error)
+    } catch (err) {
+      throw handleError(err)
     }
   }
 }
@@ -234,27 +217,20 @@ Higher-Order Function สำหรับ Server Actions ที่แปลง er
 
 ```typescript
 // Type definitions
-type ActionResult<T> =
+export type ActionResponse<T> =
   | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string; status: number } }
+  | { ok: false; error: { code: string; message: string } }
 
-export function withActionHandler<TArgs extends any[], TReturn>(
-  fn: (...args: TArgs) => Promise<TReturn>
-) {
-  return async (...args: TArgs): Promise<ActionResult<TReturn>> => {
+export const withActionHandler = <Args extends unknown[], ReturnType>(
+  fn: (...args: Args) => Promise<ReturnType>
+) => {
+  return async (...args: Args): Promise<ActionResponse<ReturnType>> => {
     try {
       const data = await fn(...args)
       return { ok: true, data }
-    } catch (error) {
-      const appError = handleError(error)
-      return {
-        ok: false,
-        error: {
-          code: appError.code,
-          message: appError.message,
-          status: appError.status
-        }
-      }
+    } catch (err) {
+      const error = handleError(err)
+      return { ok: false, error: { code: error.code, message: error.message } }
     }
   }
 }
@@ -347,8 +323,7 @@ export function EmployeeForm() {
   ok: false,
   error: {
     code: "DUPLICATE_EMPLOYEE_ID",
-    message: "รหัสพนักงานนี้มีอยู่แล้ว",
-    status: 409
+    message: "รหัสพนักงานนี้มีอยู่แล้ว"
   }
 }
 ```
@@ -366,34 +341,34 @@ export function EmployeeForm() {
 ### Success Flow (กรณีสำเร็จ)
 ```mermaid
 graph TD
-    A[User กรอกข้อมูล] --> B[Submit Form]
-    B --> C[Client เรียก Server Action]
-    C --> D[withActionHandler เรียก Service]
-    D --> E[withErrorHandling เรียก Business Logic]
-    E --> F[Service ทำงานสำเร็จ]
-    F --> G[คืนค่า data]
-    G --> H[withErrorHandling ส่งผ่าน data]
-    H --> I[withActionHandler wrap เป็น {ok: true, data}]
-    I --> J[Client ได้ response สำเร็จ]
-    J --> K[แสดง success message ใน UI]
+    A[User Input] --> B[Submit Form]
+    B --> C[Client calls Server Action]
+    C --> D[withActionHandler calls Service]
+    D --> E[withErrorHandling calls Business Logic]
+    E --> F[Service executes successfully]
+    F --> G[Return data]
+    G --> H[withErrorHandling passes data through]
+    H --> I[withActionHandler wraps as success response]
+    I --> J[Client receives success response]
+    J --> K[Show success message in UI]
 ```
 
 ### Error Flow (กรณีมี error)
 ```mermaid
 graph TD
-    A[User กรอกข้อมูลผิด] --> B[Submit Form]
-    B --> C[Client เรียก Server Action]
-    C --> D[withActionHandler เรียก Service]
-    D --> E[withErrorHandling เรียก Business Logic]
-    E --> F[Service throw AppError/Error]
-    F --> G[withErrorHandling จับ error]
-    G --> H[เรียก handleError() normalize error]
-    H --> I[handleError คืน AppError]
-    I --> J[withErrorHandling throw AppError]
-    J --> K[withActionHandler จับ AppError]
-    K --> L[wrap เป็น {ok: false, error}]
-    L --> M[Client ได้ response error]
-    M --> N[แสดง error message ใน UI]
+    A[User Invalid Input] --> B[Submit Form]
+    B --> C[Client calls Server Action]
+    C --> D[withActionHandler calls Service]
+    D --> E[withErrorHandling calls Business Logic]
+    E --> F[Service throws AppError or Error]
+    F --> G[withErrorHandling catches error]
+    G --> H[Calls handleError to normalize error]
+    H --> I[handleError returns AppError]
+    I --> J[withErrorHandling throws AppError]
+    J --> K[withActionHandler catches AppError]
+    K --> L[Wraps as error response]
+    L --> M[Client receives error response]
+    M --> N[Show error message in UI]
 ```
 
 ### ตัวอย่างการทำงานแบบ Step-by-Step
@@ -444,8 +419,7 @@ catch (error) {
     ok: false,
     error: {
       code: "DUPLICATE_EMPLOYEE_ID",
-      message: "รหัสพนักงานนี้มีอยู่แล้ว",
-      status: 409
+      message: "รหัสพนักงานนี้มีอยู่แล้ว"
     }
   }
 }
@@ -1035,9 +1009,9 @@ describe("Employee Actions Integration", () => {
 ## เทคโนโลยีและ Dependencies
 
 ### Core Technologies
-- **Next.js 15** - React framework พร้อม App Router และ Server Actions
+- **Next.js 16** - React framework พร้อม App Router และ Server Actions
 - **TypeScript** - Type safety และ better developer experience
-- **React 18** - UI library พร้อม concurrent features
+- **React 19** - UI library พร้อม concurrent features
 
 ### State Management & UI
 - **Zustand** - Lightweight state management สำหรับ toast notifications
@@ -1290,7 +1264,7 @@ export function handleError(error: unknown): AppError {
 // types/api.ts
 export type ApiResponse<T> =
   | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string; status: number } }
+  | { ok: false; error: { code: string; message: string } }
 
 // Custom hook สำหรับ type-safe API calls
 export function useApiCall<T>() {
