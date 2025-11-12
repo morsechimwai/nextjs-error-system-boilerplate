@@ -13,7 +13,7 @@ import { EmployeeForm } from "@/app/employees/form"
 // Actions
 import { getEmployeesAction } from "@/actions/getEmployee"
 
-// Stores
+// Custom Hooks
 import { useEmployeeStore } from "@/store/useEmployeeStore"
 
 // Errors
@@ -22,9 +22,11 @@ import { deleteEmployeeAction } from "@/actions/deleteEmployee"
 import { Employee } from "@/types/employee"
 
 export default function EmployeesPage() {
+  // Custom Hooks
   const employees = useEmployeeStore((state) => state.employees)
   const setEmployees = useEmployeeStore((state) => state.setEmployees)
 
+  // Fetch Employees
   const loadEmployees = useCallback(() => {
     const loadData = withErrorHandling(async () => {
       const response = await getEmployeesAction()
@@ -35,10 +37,12 @@ export default function EmployeesPage() {
     loadData()
   }, [setEmployees])
 
+  // Initial Load
   useEffect(() => {
     loadEmployees()
   }, [loadEmployees])
 
+  // Handlers
   const handleDelete = withErrorHandling(async (employee: Employee) => {
     const confirmed = window.confirm(`คุณแน่ใจหรือว่าต้องการลบ ${employee.name} พนักงานคนนี้?`)
     if (!confirmed) return

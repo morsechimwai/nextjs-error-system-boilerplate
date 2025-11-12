@@ -6,7 +6,7 @@ import { useEffect } from "react"
 // Components
 import { Toast } from "./toast"
 
-// Stores
+// Custom Hooks
 import { useToastStore } from "@/store/useToastStore"
 
 export function ToastList() {

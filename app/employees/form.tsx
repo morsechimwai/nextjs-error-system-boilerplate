@@ -13,7 +13,7 @@ import { UserPlus } from "lucide-react"
 // Actions
 import { createEmployeeAction } from "@/actions/createEmployee"
 
-// Stores
+// Custom Hooks
 import { useToastStore } from "@/store/useToastStore"
 import { useEmployeeStore } from "@/store/useEmployeeStore"
 
@@ -28,11 +28,15 @@ const defaultEmployee: Employee = {
 }
 
 export function EmployeeForm() {
-  const [employee, setEmployee] = useState<Employee>(defaultEmployee)
-  const [isPending, startTransition] = useTransition()
-  const { addToast } = useToastStore()
+  // Custom Hooks
   const addEmployee = useEmployeeStore((state) => state.addEmployee)
+  const { addToast } = useToastStore()
+  const [isPending, startTransition] = useTransition()
 
+  // Form State
+  const [employee, setEmployee] = useState<Employee>(defaultEmployee)
+
+  // Handlers
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     startTransition(async () => {

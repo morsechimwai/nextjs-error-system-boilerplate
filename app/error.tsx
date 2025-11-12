@@ -1,10 +1,19 @@
 "use client"
 
-import Link from "next/link"
+// React
 import { useEffect } from "react"
-import { useToastStore } from "@/store/useToastStore"
+
+// Next.js
+import Link from "next/link"
+
+// Components
 import Button from "@/components/button"
+
+// Icons
 import { Bug, Home, RefreshCcw } from "lucide-react"
+
+// Custom Hooks
+import { useToastStore } from "@/store/useToastStore"
 
 export default function GlobalError({
   error,

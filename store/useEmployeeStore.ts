@@ -1,7 +1,10 @@
 "use client"
 
+// Zustand
 import { create } from "zustand"
-import { Employee } from "@/services/employeeService"
+
+// Types
+import { Employee } from "@/types/employee"
 
 interface EmployeeStore {
   employees: Employee[]
@@ -9,6 +12,7 @@ interface EmployeeStore {
   addEmployee: (employee: Employee) => void
 }
 
+// Zustand store for managing employee data
 export const useEmployeeStore = create<EmployeeStore>((set) => ({
   employees: [],
   setEmployees: (employees) => set({ employees }),

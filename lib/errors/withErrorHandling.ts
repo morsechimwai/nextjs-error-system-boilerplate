@@ -1,4 +1,4 @@
-// Error
+// HandleError
 import { handleError } from "./handleError"
 
 export function withErrorHandling<Args extends unknown[], ReturnType>(

@@ -1,7 +1,9 @@
 "use client"
 
+// Zustand
 import { create } from "zustand"
 
+// Types
 export type ToastType = "success" | "error"
 
 export interface Toast {
@@ -16,6 +18,7 @@ interface ToastStore {
   removeToast: (id: number) => void
 }
 
+// Zustand store for managing toast notifications
 export const useToastStore = create<ToastStore>((set) => ({
   toasts: [],
   addToast: (message, type) =>

@@ -1,11 +1,13 @@
 "use client"
 
+// Components
+import Button from "@/components/button"
+
 // Icons
 import { Trash2, Users } from "lucide-react"
 
 // Types
 import { Employee } from "@/types/employee"
-import Button from "@/components/button"
 
 interface EmployeeListProps {
   employees: Employee[]

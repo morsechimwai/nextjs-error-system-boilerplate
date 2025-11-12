@@ -1,5 +1,8 @@
-import { cn } from "@/lib/utils"
+// Types
 import type { ToastType } from "@/store/useToastStore"
+
+// Utils
+import { cn } from "@/lib/utils"
 
 interface ToastProps {
   message: string

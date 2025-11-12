@@ -1,6 +1,11 @@
-import { AppError } from "@/lib/errors/AppError"
-import { withErrorHandling } from "@/lib/errors/withErrorHandling"
+// Types
 import { CreateEmployeeInput, Employee, GetEmployeeInput } from "@/types/employee"
+
+// AppError
+import { AppError } from "@/lib/errors/AppError"
+
+// Warpper to handle errors in service functions
+import { withErrorHandling } from "@/lib/errors/withErrorHandling"
 
 // In-memory database simulation
 const db: Employee[] = []

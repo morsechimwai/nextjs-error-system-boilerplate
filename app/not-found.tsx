@@ -1,4 +1,7 @@
+// Next.js
 import Link from "next/link"
+
+// Icons
 import { ArrowLeft, Compass, Home } from "lucide-react"
 
 export default function NotFoundPage() {
