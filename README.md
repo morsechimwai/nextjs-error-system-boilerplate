@@ -283,21 +283,8 @@ export function EmployeeForm() {
       addToast(`เพิ่ม ${result.data.name} สำเร็จ`, "success")
       setEmployee(defaultEmployee) // reset form
     } else {
-      // มี error - ไม่ต้องกลัว exception
-      console.error("Error code:", result.error.code)
-      console.error("Error message:", result.error.message)
-
-      // แสดง error ตาม code
-      switch (result.error.code) {
-        case "DUPLICATE_EMPLOYEE_ID":
-          addToast("รหัสพนักงานนี้มีอยู่แล้ว", "error")
-          break
-        case "INVALID_INPUT":
-          addToast(`ข้อมูลไม่ถูกต้อง: ${result.error.message}`, "error")
-          break
-        default:
-          addToast(result.error.message, "error")
-      }
+      // มี error - ใช้ message จาก AppError โดยตรง
+      addToast(result.error.message, "error")
     }
   }
 
@@ -751,29 +738,8 @@ export default function UserForm({
 
         onSuccess?.()
       } else {
-        // จัดการ error ตาม code
-        switch (result.error.code) {
-          case "USER_EXISTS":
-          case "EMAIL_TAKEN":
-            addToast("อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น", "error")
-            break
-
-          case "INVALID_EMAIL_FORMAT":
-            addToast("กรุณาตรวจสอบรูปแบบอีเมล", "error")
-            break
-
-          case "INVALID_NAME":
-          case "INVALID_EMAIL":
-            addToast(`ข้อมูลไม่ถูกต้อง: ${result.error.message}`, "error")
-            break
-
-          case "DATABASE_ERROR":
-            addToast("เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่อีกครั้ง", "error")
-            break
-
-          default:
-            addToast(result.error.message, "error")
-        }
+        // ใช้ message จาก AppError โดยตรง
+        addToast(result.error.message, "error")
       }
     })
   }
@@ -1080,33 +1046,67 @@ export const deleteEmployeeAction = withActionHandler(async (id: number) => {
 ### 5. Client-side Error Handling
 
 ```typescript
-// ดี - จัดการ error แต่ละ case
-const handleSubmit = async (data: CreateEmployeeInput) => {
+// ❌ ไม่ดี - ใช้ switch เฉพาะเพื่อแสดง message (ไม่จำเป็น)
+const handleSubmitBad = async (data: CreateEmployeeInput) => {
+  const result = await createEmployeeAction(data)
+
+  if (result.ok) {
+    addToast(`เพิ่มพนักงาน ${result.data.name} สำเร็จ`, "success")
+  } else {
+    // ไม่ดี - เขียน message ซ้ำ
+    switch (result.error.code) {
+      case "DUPLICATE_ID":
+        addToast("รหัสพนักงานนี้ถูกใช้แล้ว", "error") // ซ้ำกับ AppError message
+        break
+      case "INVALID_NAME":
+        addToast("ชื่อไม่ถูกต้อง", "error") // ซ้ำกับ AppError message
+        break
+      default:
+        addToast(result.error.message, "error")
+    }
+  }
+}
+
+// ✅ ดี - ใช้ message จาก AppError โดยตรง
+const handleSubmitSimple = async (data: CreateEmployeeInput) => {
   const result = await createEmployeeAction(data)
 
   if (result.ok) {
     addToast(`เพิ่มพนักงาน ${result.data.name} สำเร็จ`, "success")
     onSuccess?.(result.data)
   } else {
-    // จัดการ error ตาม code
+    // ดี - ใช้ message ที่ service กำหนดไว้แล้ว
+    addToast(result.error.message, "error")
+  }
+}
+
+// ✅ ดี - ใช้ switch เฉพาะเมื่อมี action พิเศษ
+const handleSubmitWithActions = async (data: CreateEmployeeInput) => {
+  const result = await createEmployeeAction(data)
+
+  if (result.ok) {
+    addToast(`เพิ่มพนักงาน ${result.data.name} สำเร็จ`, "success")
+    onSuccess?.(result.data)
+  } else {
     const { code, message } = result.error
 
     switch (code) {
       case ErrorCodes.EMPLOYEE.DUPLICATE_ID:
+        addToast(message, "error")
+        // Action พิเศษ: focus ที่ field ที่ผิด
         setFieldError("employeeId", "รหัสพนักงานนี้ถูกใช้แล้ว")
         break
 
-      case ErrorCodes.EMPLOYEE.INVALID_NAME:
-      case ErrorCodes.EMPLOYEE.INVALID_ID:
-        addToast(message, "error")
-        break
-
       case ErrorCodes.AUTH.PERMISSION_DENIED:
+        addToast(message, "error")
+        // Action พิเศษ: redirect ไป login
         router.push("/login")
         break
 
       case ErrorCodes.SYSTEM.DATABASE_ERROR:
-        addToast("เกิดปัญหาเชื่อมต่อฐานข้อมูล กรุณาลองใหม่", "error")
+        addToast(message, "error")
+        // Action พิเศษ: retry mechanism
+        setShowRetryButton(true)
         break
 
       default:
@@ -1282,9 +1282,10 @@ switch (result.error.code) {
 ```
 
 ### 📝 **หลักการสำคัญ:**
-- **AppError message ควรสมบูรณ์และพร้อมแสดงผู้ใช้**
-- **Switch case เฉพาะเมื่อต้องทำอะไรพิเศษ นอกจากแสดง message**
-- **หลีกเลี่ยงการเขียน message ซ้ำใน client side**
+- **AppError message ควรสมบูรณ์และพร้อมแสดงผู้ใช้** - service layer รับผิดชอบ message ที่ดี
+- **Switch case เฉพาะเมื่อต้องทำ action พิเศษ** - เช่น redirect, focus field, retry mechanism
+- **หลีกเลี่ยงการเขียน message ซ้ำใน client side** - ใช้ `result.error.message` โดยตรง
+- **ถ้าแค่แสดง toast/error → ไม่ต้อง switch case** - แค่ `addToast(result.error.message, "error")`
 
 ## Contributing
 
