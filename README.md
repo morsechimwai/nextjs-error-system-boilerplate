@@ -413,17 +413,8 @@ graph TD
     I --> J[Client receives success response]
     J --> K[Show success message in UI]
 
-    %% Success Flow Styling - Dark Green Text, Light Green Background
-    style A fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style B fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style C fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style D fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style E fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    %% Success Flow Styling - Only key success nodes
     style F fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style G fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style H fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style I fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style J fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
     style K fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
 ```
 
@@ -444,20 +435,8 @@ graph TD
     L --> M[Client receives error response]
     M --> N[Show error message in UI]
 
-    %% Error Flow Styling - Dark Red Text, Light Red Background
-    style A fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style B fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style C fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style D fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style E fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    %% Error Flow Styling - Only key error nodes
     style F fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style G fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style H fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style I fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style J fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style K fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style L fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style M fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
     style N fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
 ```
 
