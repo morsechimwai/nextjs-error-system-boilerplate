@@ -841,17 +841,9 @@ export default function UserList() {
       if (result.ok) {
         setUsers(result.data)
       } else {
-        // จัดการ error ในการโหลดข้อมูล
-        switch (result.error.code) {
-          case "DATABASE_ERROR":
-            setError("ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
-            break
-          case "PERMISSION_DENIED":
-            setError("คุณไม่มีสิทธิ์ดูรายการผู้ใช้")
-            break
-          default:
-            setError(result.error.message)
-        }
+        // ใช้ message จาก AppError โดยตรง (ไม่ต้อง switch case)
+        // เพราะ service layer ได้กำหนด message ที่ชัดเจนแล้ว
+        setError(result.error.message)
       }
 
       setLoading(false)
@@ -871,17 +863,21 @@ export default function UserList() {
       addToast(`ลบ ${user.name} สำเร็จ`, "success")
     } else {
       // จัดการ error ในการลบ
+      // ใช้ switch case เฉพาะเมื่อต้องทำ action พิเศษตาม error code
       switch (result.error.code) {
         case "USER_NOT_FOUND":
-          addToast("ไม่พบผู้ใช้ที่ต้องการลบ", "error")
-          // รีโหลดรายการเพื่อ sync กับฐานข้อมูล
+          addToast(result.error.message, "error")
+          // รีโหลดรายการเพื่อ sync กับฐานข้อมูล (action พิเศษ)
           loadUsers()
           break
         case "PERMISSION_DENIED":
-          addToast("คุณไม่มีสิทธิ์ลบผู้ใช้", "error")
+          addToast(result.error.message, "error")
+          // อาจจะ redirect ไป login page (action พิเศษ)
+          // router.push("/login")
           break
         default:
-          addToast(`ไม่สามารถลบผู้ใช้ได้: ${result.error.message}`, "error")
+          // กรณีอื่นๆ แสดง message ตรงๆ
+          addToast(result.error.message, "error")
       }
     }
   }
@@ -1206,6 +1202,89 @@ const { data: employees, loading, error, call } = useApiCall<Employee[]>()
 
 const loadEmployees = () => call(() => getEmployeesAction())
 ```
+
+## 🤔 เมื่อไหร่ควรใช้ Switch Case vs Direct Message
+
+### ❌ **ไม่ควรใช้ Switch Case:**
+```typescript
+// ❌ ไม่ดี - ทำซ้ำ message ที่ AppError มีแล้ว
+switch (result.error.code) {
+  case "USER_NOT_FOUND":
+    setError("ไม่พบผู้ใช้") // ซ้ำกับ message ใน AppError
+    break
+  case "INVALID_INPUT":
+    setError("ข้อมูลไม่ถูกต้อง") // ซ้ำกับ message ใน AppError
+    break
+  default:
+    setError(result.error.message)
+}
+
+// ✅ ดี - ใช้ message จาก AppError โดยตรง
+setError(result.error.message)
+```
+
+### ✅ **ควรใช้ Switch Case เมื่อ:**
+
+**1. ต้องทำ Action พิเศษตาม Error Code:**
+```typescript
+switch (result.error.code) {
+  case "USER_NOT_FOUND":
+    addToast(result.error.message, "error")
+    // Action พิเศษ: รีโหลดข้อมูลเพื่อ sync
+    await loadUsers()
+    break
+  case "PERMISSION_DENIED":
+    addToast(result.error.message, "error")
+    // Action พิเศษ: redirect ไป login
+    router.push("/login")
+    break
+  default:
+    addToast(result.error.message, "error")
+}
+```
+
+**2. ต้องแสดง UI หรือ UX ที่แตกต่างกัน:**
+```typescript
+switch (result.error.code) {
+  case "DUPLICATE_EMAIL":
+    addToast(result.error.message, "error")
+    // UX พิเศษ: focus ที่ email field
+    emailFieldRef.current?.focus()
+    break
+  case "WEAK_PASSWORD":
+    addToast(result.error.message, "error")
+    // UX พิเศษ: แสดง password strength indicator
+    setShowPasswordHelper(true)
+    break
+  default:
+    addToast(result.error.message, "error")
+}
+```
+
+**3. ต้อง Transform หรือ Format Message:**
+```typescript
+switch (result.error.code) {
+  case "VALIDATION_ERROR":
+    // Transform: แสดง field-specific error
+    const fieldErrors = result.error.meta?.fields as Record<string, string>
+    Object.entries(fieldErrors).forEach(([field, message]) => {
+      setFieldError(field, message)
+    })
+    break
+  case "RATE_LIMIT_EXCEEDED":
+    // Format: เพิ่มข้อมูล retry time
+    const retryAfter = result.error.meta?.retryAfter as number
+    addToast(`${result.error.message} ลองใหม่ในอีก ${retryAfter} วินาที`, "error")
+    break
+  default:
+    addToast(result.error.message, "error")
+}
+```
+
+### 📝 **หลักการสำคัญ:**
+- **AppError message ควรสมบูรณ์และพร้อมแสดงผู้ใช้**
+- **Switch case เฉพาะเมื่อต้องทำอะไรพิเศษ นอกจากแสดง message**
+- **หลีกเลี่ยงการเขียน message ซ้ำใน client side**
 
 ## Contributing
 
