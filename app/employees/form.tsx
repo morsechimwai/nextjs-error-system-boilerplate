@@ -27,7 +27,11 @@ const defaultEmployee: Employee = {
   department: "",
 }
 
-export function EmployeeForm() {
+interface EmployeeFormProps {
+  onEmployeeAdded?: () => void
+}
+
+export function EmployeeForm({ onEmployeeAdded }: EmployeeFormProps) {
   // Custom Hooks
   const addEmployee = useEmployeeStore((state) => state.addEmployee)
   const { addToast } = useToastStore()
@@ -45,6 +49,7 @@ export function EmployeeForm() {
         addEmployee(res.data)
         addToast(`เพิ่ม ${res.data.name} สำเร็จ`, "success")
         setEmployee(defaultEmployee)
+        onEmployeeAdded?.()
       } else {
         addToast(`เกิดข้อผิดพลาด: ${res.error.message}`, "error")
       }

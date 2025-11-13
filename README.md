@@ -64,7 +64,7 @@ export class AppError extends Error {
 **การใช้งาน:**
 ```typescript
 // Error พื้นฐาน
-throw new AppError("EMPLOYEE_NOT_FOUND", "ไม่พบพนักงาน", 404)
+throw new AppError("NOT_FOUND", "ไม่พบพนักงาน", 404)
 
 // Error พร้อมข้อมูลเพิ่มเติม
 throw new AppError("INVALID_INPUT", "ข้อมูลไม่ถูกต้อง", 400, {
@@ -81,7 +81,7 @@ throw new AppError("VALIDATION_ERROR", "รูปแบบอีเมลไม�
 ```
 
 **คุณสมบัติ:**
-- `code`: รหัส error ที่กำหนดเอง (เช่น "EMPLOYEE_NOT_FOUND") - ใช้สำหรับการจัดการใน code
+- `code`: รหัส error ที่กำหนดเอง (เช่น "NOT_FOUND") - ใช้สำหรับการจัดการใน code
 - `message`: ข้อความอธิบาย error ที่แสดงให้ผู้ใช้ดู
 - `status`: HTTP status code (default: 400) - ใช้กำหนด response status
 - `meta`: ข้อมูลเพิ่มเติม (optional) - เก็บ context หรือ debugging info
@@ -151,9 +151,9 @@ export function withErrorHandling<Args extends unknown[], ReturnType>(
 **การใช้งาน:**
 ```typescript
 // Service ที่ไม่มี error handling
-async function rawCreateEmployee(data: CreateEmployeeData) {
-  if (!data.name) throw new Error("Name is required") // อาจเป็น Error ปกติ
-  if (!data.employeeId) throw new AppError("INVALID_ID", "รหัสพนักงานไม่ถูกต้อง")
+async function rawCreateEmployee(data: CreateEmployeeInput) {
+  if (!data.name) throw new Error("Employee name required") // อาจเป็น Error ปกติ
+  if (!data.employeeId) throw new AppError("INVALID_INPUT", "รหัสพนักงานไม่ถูกต้อง")
 
   // Database operation ที่อาจ throw error
   return await db.employee.create({ data })
@@ -184,7 +184,7 @@ export const getEmployeeById = withErrorHandling(async (id: number) => {
   const employee = await db.employee.findUnique({ where: { id } })
 
   if (!employee) {
-    throw new AppError("EMPLOYEE_NOT_FOUND", "ไม่พบพนักงาน", 404)
+    throw new AppError("NOT_FOUND", "ไม่พบพนักงาน", 404)
   }
 
   return employee
@@ -243,10 +243,10 @@ export const withActionHandler = <Args extends unknown[], ReturnType>(
 
 import { withActionHandler } from "@/lib/errors/withActionHandler"
 import { createEmployee } from "@/services/employeeService"
-import { CreateEmployeeData } from "@/types/employee"
+import { CreateEmployeeInput } from "@/types/employee"
 
 // Wrap service ด้วย withActionHandler
-export const createEmployeeAction = withActionHandler(async (data: CreateEmployeeData) => {
+export const createEmployeeAction = withActionHandler(async (data: CreateEmployeeInput) => {
   return createEmployee(data) // service อาจ throw AppError
 })
 
@@ -484,7 +484,7 @@ pnpm dev
 import { AppError } from "@/lib/errors/AppError"
 import { withErrorHandling } from "@/lib/errors/withErrorHandling"
 
-// Raw function (ไม่มี error handling)
+// Raw function (ไม่มี error handling wrapper)
 async function rawCreateUser(userData: CreateUserData) {
   // Input validation
   if (!userData.email?.trim()) {
@@ -508,23 +508,36 @@ async function rawCreateUser(userData: CreateUserData) {
     throw new AppError("USER_EXISTS", "อีเมลนี้ถูกใช้งานแล้ว", 409)
   }
 
-  // Database operation (อาจ throw database error)
-  try {
-    return await db.user.create({
-      data: {
-        email: userData.email,
-        name: userData.name,
-        createdAt: new Date()
-      }
-    })
-  } catch (dbError) {
-    // Database constraint violation หรือ connection error
-    throw new AppError("DATABASE_ERROR", "ไม่สามารถสร้างผู้ใช้ได้", 500)
-  }
+  // Database operation (ไม่ต้อง try-catch เพราะ withErrorHandling จัดการให้)
+  // หาก database error เกิดขึ้น withErrorHandling จะจับและแปลงให้เป็น AppError
+  return await db.user.create({
+    data: {
+      email: userData.email,
+      name: userData.name,
+      createdAt: new Date()
+    }
+  })
 }
 
 // Wrap ด้วย withErrorHandling
 export const createUser = withErrorHandling(rawCreateUser)
+
+/**
+ * 📝 หมายเหตุสำคัญ: ไม่ต้องเขียน try-catch ใน service functions
+ *
+ * เหตุผล:
+ * 1. withErrorHandling จะจับทุก error อัตโนมัติ
+ * 2. หาก database หรือ external service throw error
+ *    → withErrorHandling จะเรียก handleError()
+ *    → แปลงเป็น AppError อัตโนมัติ
+ * 3. ทำให้โค้ด service สะอาด เน้น business logic
+ * 4. Error handling แยกจาก business logic ชัดเจน
+ *
+ * ตัวอย่างที่เกิดขึ้นจริง:
+ * - Database connection timeout → กลายเป็น AppError("INTERNAL_ERROR", ...)
+ * - Prisma constraint error → กลายเป็น AppError("INTERNAL_ERROR", ...)
+ * - Network error → กลายเป็น AppError("INTERNAL_ERROR", ...)
+ */
 
 // Services อื่นๆ
 export const getUserById = withErrorHandling(async (id: number) => {
@@ -568,6 +581,7 @@ export const updateUserProfile = withErrorHandling(async (id: number, data: Upda
     }
   }
 
+  // ไม่ต้อง try-catch เพราะ withErrorHandling จัดการให้
   return await db.user.update({
     where: { id },
     data: {
@@ -1038,7 +1052,7 @@ export const ErrorCodes = {
 
   // Employee Management (2xxx)
   EMPLOYEE: {
-    NOT_FOUND: "EMPLOYEE_NOT_FOUND",
+    NOT_FOUND: "NOT_FOUND",
     DUPLICATE_ID: "EMPLOYEE_DUPLICATE_ID",
     INVALID_DEPARTMENT: "EMPLOYEE_INVALID_DEPARTMENT"
   },
@@ -1066,7 +1080,7 @@ throw new AppError(ErrorCodes.USER.NOT_FOUND, "ไม่พบผู้ใช้
 
 ```typescript
 // ดี - แยก validation, business logic ชัดเจน
-export const createEmployee = withErrorHandling(async (data: CreateEmployeeData) => {
+export const createEmployee = withErrorHandling(async (data: CreateEmployeeInput) => {
   // 1. Input Validation
   await validateEmployeeInput(data)
 
@@ -1077,7 +1091,7 @@ export const createEmployee = withErrorHandling(async (data: CreateEmployeeData)
   return await saveEmployee(data)
 })
 
-async function validateEmployeeInput(data: CreateEmployeeData) {
+async function validateEmployeeInput(data: CreateEmployeeInput) {
   if (!data.name?.trim()) {
     throw new AppError(ErrorCodes.EMPLOYEE.INVALID_NAME, "ชื่อพนักงานจำเป็น", 400)
   }
@@ -1087,7 +1101,7 @@ async function validateEmployeeInput(data: CreateEmployeeData) {
   }
 }
 
-async function validateBusinessRules(data: CreateEmployeeData) {
+async function validateBusinessRules(data: CreateEmployeeInput) {
   // ตรวจสอบ ID ซ้ำ
   const existing = await db.employee.findUnique({
     where: { employeeId: data.employeeId }
@@ -1113,8 +1127,8 @@ async function validateBusinessRules(data: CreateEmployeeData) {
 
 ```typescript
 // ดี - รองรับทั้ง FormData และ Object
-export const createEmployeeAction = withActionHandler(async (input: FormData | CreateEmployeeData) => {
-  let data: CreateEmployeeData
+export const createEmployeeAction = withActionHandler(async (input: FormData | CreateEmployeeInput) => {
+  let data: CreateEmployeeInput
 
   if (input instanceof FormData) {
     data = {
@@ -1145,7 +1159,7 @@ export const deleteEmployeeAction = withActionHandler(async (id: number) => {
 
 ```typescript
 // ดี - จัดการ error แต่ละ case
-const handleSubmit = async (data: CreateEmployeeData) => {
+const handleSubmit = async (data: CreateEmployeeInput) => {
   const result = await createEmployeeAction(data)
 
   if (result.ok) {

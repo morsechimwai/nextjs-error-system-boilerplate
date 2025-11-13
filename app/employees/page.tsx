@@ -16,8 +16,7 @@ import { getEmployeesAction } from "@/actions/getEmployee"
 // Custom Hooks
 import { useEmployeeStore } from "@/store/useEmployeeStore"
 
-// Errors
-import { withErrorHandling } from "@/lib/errors/withErrorHandling"
+// Actions
 import { deleteEmployeeAction } from "@/actions/deleteEmployee"
 import { Employee } from "@/types/employee"
 
@@ -27,14 +26,13 @@ export default function EmployeesPage() {
   const setEmployees = useEmployeeStore((state) => state.setEmployees)
 
   // Fetch Employees
-  const loadEmployees = useCallback(() => {
-    const loadData = withErrorHandling(async () => {
-      const response = await getEmployeesAction()
-      if (response.ok) {
-        setEmployees(response.data)
-      }
-    })
-    loadData()
+  const loadEmployees = useCallback(async () => {
+    const response = await getEmployeesAction()
+    if (response.ok) {
+      setEmployees(response.data)
+    } else {
+      console.error("Failed to load employees:", response.error)
+    }
   }, [setEmployees])
 
   // Initial Load
@@ -43,15 +41,17 @@ export default function EmployeesPage() {
   }, [loadEmployees])
 
   // Handlers
-  const handleDelete = withErrorHandling(async (employee: Employee) => {
+  const handleDelete = async (employee: Employee) => {
     const confirmed = window.confirm(`คุณแน่ใจหรือว่าต้องการลบ ${employee.name} ออกจากพนักงาน?`)
     if (!confirmed) return
 
     const response = await deleteEmployeeAction({ id: employee.id })
     if (response.ok) {
-      loadEmployees()
+      await loadEmployees()
+    } else {
+      console.error("Failed to delete employee:", response.error)
     }
-  })
+  }
 
   return (
     <main className="p-8 space-y-8">
@@ -65,7 +65,7 @@ export default function EmployeesPage() {
           />
         </div>
         <div className="col-span-1">
-          <EmployeeForm />
+          <EmployeeForm onEmployeeAdded={loadEmployees} />
         </div>
       </div>
 
