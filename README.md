@@ -1044,7 +1044,7 @@ export const deleteEmployeeAction = withActionHandler(async (id: number) => {
 ### 5. Client-side Error Handling
 
 ```typescript
-// ❌ ไม่ดี - ใช้ switch เฉพาะเพื่อแสดง message (ไม่จำเป็น)
+// ไม่ดี - ใช้ switch เฉพาะเพื่อแสดง message (ไม่จำเป็น)
 const handleSubmitBad = async (data: CreateEmployeeInput) => {
   const result = await createEmployeeAction(data)
 
@@ -1065,7 +1065,7 @@ const handleSubmitBad = async (data: CreateEmployeeInput) => {
   }
 }
 
-// ✅ ดี - ใช้ message จาก AppError โดยตรง
+// ดี - ใช้ message จาก AppError โดยตรง
 const handleSubmitSimple = async (data: CreateEmployeeInput) => {
   const result = await createEmployeeAction(data)
 
@@ -1078,7 +1078,7 @@ const handleSubmitSimple = async (data: CreateEmployeeInput) => {
   }
 }
 
-// ✅ ดี - ใช้ switch เฉพาะเมื่อมี action พิเศษ
+// ดี - ใช้ switch เฉพาะเมื่อมี action พิเศษ
 const handleSubmitWithActions = async (data: CreateEmployeeInput) => {
   const result = await createEmployeeAction(data)
 
@@ -1201,11 +1201,11 @@ const { data: employees, loading, error, call } = useApiCall<Employee[]>()
 const loadEmployees = () => call(() => getEmployeesAction())
 ```
 
-## 🤔 เมื่อไหร่ควรใช้ Switch Case vs Direct Message
+## เมื่อไหร่ควรใช้ Switch Case vs Direct Message
 
-### ❌ **ไม่ควรใช้ Switch Case:**
+### **ไม่ควรใช้ Switch Case:**
 ```typescript
-// ❌ ไม่ดี - ทำซ้ำ message ที่ AppError มีแล้ว
+// ไม่ดี - ทำซ้ำ message ที่ AppError มีแล้ว
 switch (result.error.code) {
   case "USER_NOT_FOUND":
     setError("ไม่พบผู้ใช้") // ซ้ำกับ message ใน AppError
@@ -1217,11 +1217,11 @@ switch (result.error.code) {
     setError(result.error.message)
 }
 
-// ✅ ดี - ใช้ message จาก AppError โดยตรง
+// ดี - ใช้ message จาก AppError โดยตรง
 setError(result.error.message)
 ```
 
-### ✅ **ควรใช้ Switch Case เมื่อ:**
+### **ควรใช้ Switch Case เมื่อ:**
 
 **1. ต้องทำ Action พิเศษตาม Error Code:**
 ```typescript
@@ -1279,7 +1279,7 @@ switch (result.error.code) {
 }
 ```
 
-### 📝 **หลักการสำคัญ:**
+### **หลักการสำคัญ:**
 - **AppError message ควรสมบูรณ์และพร้อมแสดงผู้ใช้** - service layer รับผิดชอบ message ที่ดี
 - **Switch case เฉพาะเมื่อต้องทำ action พิเศษ** - เช่น redirect, focus field, retry mechanism
 - **หลีกเลี่ยงการเขียน message ซ้ำใน client side** - ใช้ `result.error.message` โดยตรง
