@@ -338,7 +338,58 @@ export function EmployeeForm() {
 
 ## Flow การทำงานของระบบอย่างละเอียด
 
-### Success Flow (กรณีสำเร็จ)
+### Sequence Diagrams (Technical View)
+
+#### Success Flow - Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant User
+    participant Client as Client Component
+    participant Action as Server Action<br/>(withActionHandler)
+    participant Service as Service Layer<br/>(withErrorHandling)
+    participant DB as Database
+
+    User->>Client: Submit Form Data
+    Client->>Action: createEmployeeAction(data)
+    Action->>Service: createEmployee(data)
+    Service->>Service: Validate Input
+    Service->>DB: Check for duplicates
+    DB-->>Service: No conflicts
+    Service->>DB: Insert employee
+    DB-->>Service: Employee created
+    Service-->>Action: Return employee data
+    Action-->>Client: { ok: true, data: employee }
+    Client->>User: Show success toast
+```
+
+#### Error Flow - Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant User
+    participant Client as Client Component
+    participant Action as Server Action<br/>(withActionHandler)
+    participant Service as Service Layer<br/>(withErrorHandling)
+    participant Handler as handleError()
+    participant DB as Database
+
+    User->>Client: Submit Invalid Data
+    Client->>Action: createEmployeeAction(data)
+    Action->>Service: createEmployee(data)
+    Service->>Service: Validate Input
+    Service->>DB: Check for duplicates
+    DB-->>Service: Duplicate found
+    Service->>Service: throw AppError("DUPLICATE_ID")
+    Service->>Handler: handleError(error)
+    Handler-->>Service: Normalized AppError
+    Service-->>Action: throw AppError
+    Action->>Action: Catch AppError
+    Action-->>Client: { ok: false, error: {...} }
+    Client->>User: Show error toast
+```
+
+### Process Flow Diagrams (Conceptual View)
+
+#### Success Flow - Process Overview
 ```mermaid
 graph TD
     A[User Input] --> B[Submit Form]
@@ -351,9 +402,12 @@ graph TD
     H --> I[withActionHandler wraps as success response]
     I --> J[Client receives success response]
     J --> K[Show success message in UI]
+
+    style F fill:#d4edda
+    style K fill:#d4edda
 ```
 
-### Error Flow (กรณีมี error)
+#### Error Flow - Process Overview
 ```mermaid
 graph TD
     A[User Invalid Input] --> B[Submit Form]
@@ -369,6 +423,9 @@ graph TD
     K --> L[Wraps as error response]
     L --> M[Client receives error response]
     M --> N[Show error message in UI]
+
+    style F fill:#f8d7da
+    style N fill:#f8d7da
 ```
 
 ### ตัวอย่างการทำงานแบบ Step-by-Step
@@ -437,7 +494,7 @@ if (result.ok) {
 
 ```bash
 # Clone โปรเจค
-git clone <repository-url>
+git clone https://github.com/morsechimwai/nextjs-error-system-boilerplate
 cd nextjs-error-system-boilerplate
 
 # ติดตั้ง dependencies
