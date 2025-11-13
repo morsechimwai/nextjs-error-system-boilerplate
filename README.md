@@ -397,49 +397,6 @@ sequenceDiagram
     end
 ```
 
-### Process Flow Diagrams (Conceptual View)
-
-#### Success Flow - Process Overview
-```mermaid
-graph TD
-    A[User Input] --> B[Submit Form]
-    B --> C[Client calls Server Action]
-    C --> D[withActionHandler calls Service]
-    D --> E[withErrorHandling calls Business Logic]
-    E --> F[Service executes successfully]
-    F --> G[Return data]
-    G --> H[withErrorHandling passes data through]
-    H --> I[withActionHandler wraps as success response]
-    I --> J[Client receives success response]
-    J --> K[Show success message in UI]
-
-    %% Success Flow Styling - Only key success nodes
-    style F fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-    style K fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
-```
-
-#### Error Flow - Process Overview
-```mermaid
-graph TD
-    A[User Invalid Input] --> B[Submit Form]
-    B --> C[Client calls Server Action]
-    C --> D[withActionHandler calls Service]
-    D --> E[withErrorHandling calls Business Logic]
-    E --> F[Service throws AppError or Error]
-    F --> G[withErrorHandling catches error]
-    G --> H[Calls handleError to normalize error]
-    H --> I[handleError returns AppError]
-    I --> J[withErrorHandling throws AppError]
-    J --> K[withActionHandler catches AppError]
-    K --> L[Wraps as error response]
-    L --> M[Client receives error response]
-    M --> N[Show error message in UI]
-
-    %% Error Flow Styling - Only key error nodes
-    style F fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-    style N fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
-```
-
 ### ตัวอย่างการทำงานแบบ Step-by-Step
 
 **Scenario: User พยายามสร้างพนักงานที่มีรหัสซ้ำ**
