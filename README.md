@@ -807,8 +807,6 @@ export default function UserList() {
       if (result.ok) {
         setUsers(result.data)
       } else {
-        // ใช้ message จาก AppError โดยตรง (ไม่ต้อง switch case)
-        // เพราะ service layer ได้กำหนด message ที่ชัดเจนแล้ว
         setError(result.error.message)
       }
 
