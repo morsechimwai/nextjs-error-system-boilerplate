@@ -459,22 +459,6 @@ if (result.ok) {
 }
 ```
 
-## วิธีการติดตั้งและรัน
-
-```bash
-# Clone โปรเจค
-git clone https://github.com/morsechimwai/nextjs-error-system-boilerplate
-cd nextjs-error-system-boilerplate
-
-# ติดตั้ง dependencies
-pnpm install
-
-# รันโปรเจค
-pnpm dev
-```
-
-เปิดเบราว์เซอร์ที่ [http://localhost:3000](http://localhost:3000) เพื่อดูตัวอย่างการทำงาน
-
 ## ตัวอย่างการใช้งานแบบ Step-by-Step
 
 ### 1. การสร้าง Service ใหม่
