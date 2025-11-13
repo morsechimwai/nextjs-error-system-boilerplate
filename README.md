@@ -349,17 +349,22 @@ sequenceDiagram
     participant Service as Service Layer<br/>(withErrorHandling)
     participant DB as Database
 
-    User->>Client: Submit Form Data
-    Client->>Action: createEmployeeAction(data)
-    Action->>Service: createEmployee(data)
+    User->>+Client: Submit Form Data
+    Client->>+Action: createEmployeeAction(data)
+    Action->>+Service: createEmployee(data)
     Service->>Service: Validate Input
-    Service->>DB: Check for duplicates
-    DB-->>Service: No conflicts
-    Service->>DB: Insert employee
-    DB-->>Service: Employee created
-    Service-->>Action: Return employee data
-    Action-->>Client: { ok: true, data: employee }
-    Client->>User: Show success toast
+    Service->>+DB: Check for duplicates
+    DB-->>-Service: No conflicts
+    Service->>+DB: Insert employee
+    DB-->>-Service: Employee created
+    Service-->>-Action: Return employee data
+    Action-->>-Client: { ok: true, data: employee }
+    Client->>-User: Show success toast
+
+    %% Success Flow Styling
+    rect rgb(34, 139, 34)
+        note over User,DB: Success Flow - All operations completed successfully
+    end
 ```
 
 #### Error Flow - Sequence Diagram
@@ -372,19 +377,24 @@ sequenceDiagram
     participant Handler as handleError()
     participant DB as Database
 
-    User->>Client: Submit Invalid Data
-    Client->>Action: createEmployeeAction(data)
-    Action->>Service: createEmployee(data)
+    User->>+Client: Submit Invalid Data
+    Client->>+Action: createEmployeeAction(data)
+    Action->>+Service: createEmployee(data)
     Service->>Service: Validate Input
-    Service->>DB: Check for duplicates
-    DB-->>Service: Duplicate found
+    Service->>+DB: Check for duplicates
+    DB-->>-Service: Duplicate found
     Service->>Service: throw AppError("DUPLICATE_ID")
-    Service->>Handler: handleError(error)
-    Handler-->>Service: Normalized AppError
-    Service-->>Action: throw AppError
+    Service->>+Handler: handleError(error)
+    Handler-->>-Service: Normalized AppError
+    Service-->>-Action: throw AppError
     Action->>Action: Catch AppError
-    Action-->>Client: { ok: false, error: {...} }
-    Client->>User: Show error toast
+    Action-->>-Client: { ok: false, error: {...} }
+    Client->>-User: Show error toast
+
+    %% Error Flow Styling
+    rect rgb(178, 34, 34)
+        note over User,DB: Error Flow - Error handling and recovery
+    end
 ```
 
 ### Process Flow Diagrams (Conceptual View)
@@ -403,8 +413,18 @@ graph TD
     I --> J[Client receives success response]
     J --> K[Show success message in UI]
 
-    style F fill:#d4edda
-    style K fill:#d4edda
+    %% Success Flow Styling - Dark Green Text, Light Green Background
+    style A fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style B fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style C fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style D fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style E fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style F fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style G fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style H fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style I fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style J fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style K fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
 ```
 
 #### Error Flow - Process Overview
@@ -424,8 +444,21 @@ graph TD
     L --> M[Client receives error response]
     M --> N[Show error message in UI]
 
-    style F fill:#f8d7da
-    style N fill:#f8d7da
+    %% Error Flow Styling - Dark Red Text, Light Red Background
+    style A fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style B fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style C fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style D fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style E fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style F fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style G fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style H fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style I fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style J fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style K fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style L fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style M fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+    style N fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
 ```
 
 ### ตัวอย่างการทำงานแบบ Step-by-Step
