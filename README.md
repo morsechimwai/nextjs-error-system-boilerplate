@@ -523,7 +523,7 @@ async function rawCreateUser(userData: CreateUserData) {
 export const createUser = withErrorHandling(rawCreateUser)
 
 /**
- * 📝 หมายเหตุสำคัญ: ไม่ต้องเขียน try-catch ใน service functions
+ * ทำไมต้องใช้ withErrorHandling?
  *
  * เหตุผล:
  * 1. withErrorHandling จะจับทุก error อัตโนมัติ
@@ -940,64 +940,6 @@ export default function UserList() {
 | Hard to debug | Easy debugging |
 | ไม่ Type-safe | Full TypeScript support |
 | Error UX ไม่เป็นมาตรฐาน | Consistent error UX |
-
-## การทดสอบ Layered Error System
-
-### ทดสอบ Error Handling ในแต่ละชั้น
-
-```typescript
-// tests/errors/AppError.test.ts
-import { AppError } from "@/lib/errors/AppError"
-
-describe("AppError", () => {
-  it("should create AppError with default status", () => {
-    const error = new AppError("TEST_CODE", "Test message")
-
-    expect(error.code).toBe("TEST_CODE")
-    expect(error.message).toBe("Test message")
-    expect(error.status).toBe(400) // default
-    expect(error.name).toBe("AppError")
-  })
-
-  it("should create AppError with custom status and meta", () => {
-    const error = new AppError("NOT_FOUND", "Resource not found", 404, { id: 123 })
-
-    expect(error.status).toBe(404)
-    expect(error.meta).toEqual({ id: 123 })
-  })
-})
-
-// tests/errors/handleError.test.ts
-import { handleError } from "@/lib/errors/handleError"
-import { AppError } from "@/lib/errors/AppError"
-
-describe("handleError", () => {
-  it("should pass through AppError unchanged", () => {
-    const originalError = new AppError("TEST_CODE", "Test message", 404)
-    const result = handleError(originalError)
-
-    expect(result).toBe(originalError) // same instance
-  })
-
-  it("should convert Error to AppError", () => {
-    const originalError = new Error("Database connection failed")
-    const result = handleError(originalError)
-
-    expect(result).toBeInstanceOf(AppError)
-    expect(result.code).toBe("INTERNAL_ERROR")
-    expect(result.message).toBe("Database connection failed")
-    expect(result.status).toBe(500)
-  })
-
-  it("should handle unknown error types", () => {
-    const result = handleError("string error")
-
-    expect(result).toBeInstanceOf(AppError)
-    expect(result.code).toBe("UNKNOWN_ERROR")
-    expect(result.status).toBe(500)
-  })
-})
-```
 
 ## เทคโนโลยีและ Dependencies
 
